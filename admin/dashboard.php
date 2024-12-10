@@ -28,7 +28,7 @@ $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'Admin';
             <li><a href="manage_users.php">Manage Users</a></li>
             <li><a href="view_guests.php">View Guests</a></li>
             <li><a href="edit_guests.php">Edit Guests</a></li>
-            <li><a href="view_reservations.php">View Reservations</a></li>
+            <li><a href="manage_reservations.php">View Reservations</a></li>
             <li><a href="view_logs.php">View Logs</a></li>
         </ul>
         <a href="../logout.php" class="logout-btn">Logout</a>

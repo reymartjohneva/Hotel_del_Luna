@@ -1,0 +1,78 @@
+/* General Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Dashboard Container */
+.dashboard {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Welcome Message */
+.dashboard h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #473838;
+}
+
+/* Role Information */
+.dashboard p {
+    font-size: 18px;
+    margin: 10px 0;
+    color: #555;
+}
+
+.dashboard strong {
+    color: #121212;
+}
+
+/* Admin, Receptionist, Guest Panels */
+.dashboard h3 {
+    margin-top: 20px;
+    font-size: 20px;
+    color: #520852;
+}
+
+.dashboard ul {
+    list-style: none;
+    padding: 0;
+}
+
+.dashboard ul li {
+    margin: 10px 0;
+}
+
+.dashboard ul li a {
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+}
+
+.dashboard ul li a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .dashboard {
+        padding: 15px;
+    }
+
+    .dashboard h2 {
+        font-size: 20px;
+    }
+
+    .dashboard h3 {
+        font-size: 18px;
+    }
+}
