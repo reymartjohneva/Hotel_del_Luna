@@ -27,8 +27,7 @@ $username = isset($_SESSION['username']) ? $_SESSION['username'] : 'Receptionist
         <ul>
             <li><a href="view_guests.php">View Guest</a></li>
             <li><a href="manage_reservations.php">View Reservations</a></li>
-            <li><a href="manage_rooms.php">View rooms</a></li>
-            <li><a href="edit_rooms.php">Manage rooms</a></li>
+            <li><a href="manage_rooms.php">Manage rooms</a></li>
         </ul>
         <a href="../logout.php" class="logout-btn">Logout</a>
     </div>

@@ -65,6 +65,13 @@ $result = $pdo->query($sql);
         <section id="room-management">
             <h2>Manage Rooms</h2>
 
+<!-- Go Back Button -->
+<div class="go-back-button">
+    <a href="dashboard.php">
+        <button type="button">Go Back to Dashboard</button>
+    </a>
+</div>
+
             <!-- Add Room Form -->
             <div id="add-room-form">
                 <h3>Add New Room</h3>
@@ -252,4 +259,25 @@ footer {
     bottom: 0;
     width: 100%;
 }
+/* Go Back Button */
+.go-back-button {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.go-back-button button {
+    padding: 12px 20px;
+    background-color: #f44336; /* Red color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.go-back-button button:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
 </style>
