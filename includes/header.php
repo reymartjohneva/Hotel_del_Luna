@@ -57,10 +57,8 @@ nav ul li a:hover {
         <?php if (isset($_SESSION['user_id'])): ?>
             <nav>
                 <ul>
-                    <li><a href="/project108/dashboard.php">Dashboard</a></li>
+                    <li><a href="/hotelismmm/admin/dashboard.php">Dashboard</a></li>
                     <li><a href="/project108/rooms.php">Rooms</a></li>
-                    <li><a href="/project108/bookings.php">Bookings</a></li>
-                    <li><a href="/project108/customers.php">Customers</a></li>
                     <li><a href="/project108/logout.php">Logout</a></li>
                 </ul>
             </nav>

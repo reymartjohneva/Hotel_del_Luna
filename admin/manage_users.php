@@ -24,61 +24,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET['search'])) {
     $searchTerm = '%' . $_GET['search'] . '%';
 }
 
-// Handle role updates
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_role') {
-    $user_id = (int)$_POST['user_id'];
-    $new_role = $_POST['new_role'];
+// Handle username update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_username') {
+    $user_id_to_update = (int)$_POST['user_id'];
+    $new_username = $_POST['new_username'];
 
-    if ($user_id === $_SESSION['user_id']) {
-        $error = "You cannot modify your own account.";
-    } elseif (in_array($new_role, ['receptionist', 'guest'])) {
-        $currentRoleStmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
-        $currentRoleStmt->execute([$user_id]);
-        $old_role = $currentRoleStmt->fetchColumn();
-
-        if ($old_role) {
-            $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ? AND role != 'admin'");
-            $stmt->execute([$new_role, $user_id]);
-
-            $logStmt = $pdo->prepare("INSERT INTO activity_logs (user_id, user_type, action) VALUES (?, ?, ?)");
-            $logStmt->execute([
-                $_SESSION['user_id'],
-                $_SESSION['role'],
-                "Updated user #$user_id role from $old_role to $new_role"
-            ]);
-
-            $success = "User role updated successfully.";
-        } else {
-            $error = "User not found or invalid ID.";
-        }
+    if ($user_id_to_update === $_SESSION['user_id']) {
+        $error = "You cannot modify your own username.";
     } else {
-        $error = "Invalid role selected.";
+        $stmt = $pdo->prepare("UPDATE users SET username = ? WHERE id = ?");
+        $stmt->execute([$new_username, $user_id_to_update]);
+
+        // Log the action
+        $logStmt = $pdo->prepare("INSERT INTO activity_logs (user_id, user_type, action) VALUES (?, ?, ?)");
+        $logStmt->execute([$_SESSION['user_id'], $_SESSION['role'], "Updated username for user #$user_id_to_update"]);
+
+        $success = "Username updated successfully.";
     }
 }
 
-// Handle user deletions
-// Before deleting the user
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM reservations WHERE guest_id = ?");
-$stmt->execute([$user_id]);
-$reservationsCount = $stmt->fetchColumn();
+// Handle user creation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'insert_user') {
+    $username = $_POST['username'];
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+    $role = $_POST['role'];
 
-if ($reservationsCount > 0) {
-    $error = "Cannot delete this user. There are reservations associated with this user.";
-} else {
-    // Proceed with deletion
-    $stmt = $pdo->prepare("DELETE FROM users WHERE id = ? AND role != 'admin'");
-    $stmt->execute([$user_id]);
-    
+    $stmt = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+    $stmt->execute([$username, $password, $role]);
+
+    // Log the action
     $logStmt = $pdo->prepare("INSERT INTO activity_logs (user_id, user_type, action) VALUES (?, ?, ?)");
-    $logStmt->execute([
-        $_SESSION['user_id'],
-        $_SESSION['role'],
-        "Deleted user #$user_id"
-    ]);
+    $logStmt->execute([$_SESSION['user_id'], $_SESSION['role'], "Inserted new user $username"]);
 
-    $success = "User deleted successfully.";
+    $success = "User created successfully.";
 }
 
+// Handle user deletions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_user') {
+    $user_id = (int)$_POST['user_id'];
+
+    if ($user_id === $_SESSION['user_id']) {
+        $error = "You cannot delete your own account.";
+    } else {
+        $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->execute([$user_id]);
+
+        // Log the action
+        $logStmt = $pdo->prepare("INSERT INTO activity_logs (user_id, user_type, action) VALUES (?, ?, ?)");
+        $logStmt->execute([$_SESSION['user_id'], $_SESSION['role'], "Deleted user #$user_id"]);
+
+        $success = "User deleted successfully.";
+    }
+}
 
 // Fetch users
 if ($searchTerm) {
@@ -111,11 +108,24 @@ if ($searchTerm) {
     <?php if (isset($success)) echo "<p class='success'>$success</p>"; ?>
     <?php if (isset($error)) echo "<p class='error'>$error</p>"; ?>
 
-    <form method="GET" action="" style="margin: 20px 0; text-align: center;">
-    <input type="text" name="search" placeholder="Search by username" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-    <button type="submit">Search</button>
-</form>
+      <!-- Search Form -->
+      <form method="GET" action="">
+        <input type="text" name="search" placeholder="Search by username" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+        <button type="submit">Search</button>
+    </form>
 
+    <!-- Insert New User Form -->
+    <form method="POST" action="">
+        <h3>Create New User</h3>
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <select name="role" required>
+            <option value="receptionist">Receptionist</option>
+            <option value="guest">Guest</option>
+        </select>
+        <input type="hidden" name="action" value="insert_user">
+        <button type="submit">Insert User</button>
+    </form>
 
     <table>
         <thead>
@@ -131,12 +141,15 @@ if ($searchTerm) {
                     <td><?= htmlspecialchars($user['username']) ?></td>
                     <td><?= htmlspecialchars($user['role']) ?></td>
                     <td>
+                        <!-- Update Username -->
                         <form method="POST" style="display:inline;">
                             <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                            <input type="hidden" name="action" value="update_role">
-                            <button type="submit" name="new_role" value="receptionist">Set to Receptionist</button>
-                            <button type="submit" name="new_role" value="guest">Set to Guest</button>
+                            <input type="text" name="new_username" value="<?= $user['username'] ?>" required>
+                            <input type="hidden" name="action" value="update_username">
+                            <button type="submit">Update Username</button>
                         </form>
+
+                        <!-- Delete User -->
                         <form method="POST" style="display:inline;">
                             <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
                             <input type="hidden" name="action" value="delete_user">
@@ -158,7 +171,6 @@ if ($searchTerm) {
 </div>
 
 <?php include '../includes/footer.php'; ?>
-
 
 <!-- Inline CSS for styling -->
 <style>
@@ -257,37 +269,37 @@ if ($searchTerm) {
     }
 
     /* Styling for the search bar */
-form input[type="text"] {
-    width: 300px;
-    padding: 10px;
-    margin-right: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
+    form input[type="text"] {
+        width: 300px;
+        padding: 10px;
+        margin-right: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
 
-form input[type="text"]:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    outline: none;
-}
+    form input[type="text"]:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
 
-form button {
-    padding: 10px 15px;
-    font-size: 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s, box-shadow 0.2s;
-}
+    form button {
+        padding: 10px 15px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s, box-shadow 0.2s;
+    }
 
-form button:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
+    form button:hover {
+        background-color: #0056b3;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+    
 </style>
